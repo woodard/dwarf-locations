@@ -4,8 +4,8 @@
 
 It is common in SIMD vectorization for the compiler to generate code that
 promotes portions of an array into vector registers. For example, if the
-hardware has vector registers with 8 elements, and 8 wide SIMD instructions, the
-compiler may vectorize a loop so that is executes 8 iterations concurrently for
+hardware has vector registers with 8 elements, and 8-wide SIMD instructions, the
+compiler may vectorize a loop so that it executes 8 iterations concurrently for
 each vectorized loop iteration.
 
 On the first iteration of the generated vectorized loop, iterations 0 to 7 of
@@ -42,22 +42,24 @@ remains in memory. Consider the loop in this C function, for example:
             dst[i] += src[i];
     }
 
-Inside the loop body, the machine code loads src[i] and dst[i] into registers,
-adds them, and stores the result back into dst[i].
+Inside the vectorized loop body, the machine code loads src[i]..src[i+7] and
+dst[i]..dst[i+7] into registers, adds them, and stores the result back into
+dst[i]..dst[i+7].
 
-Considering the location of dst and src in the loop body, the elements dst[i]
-and src[i] would be located in registers, all other elements are located in
-memory. Let register R0 contain the base address of dst, register R1 contain i,
-and register R2 contain the registerized dst[i] element.
+Considering the location of dst and src in the loop body, the elements
+dst[i]..dst[i+7] and src[i]..src[i+7] would be located in vector registers,
+all other elements are located in memory. Let register R0 contain the base
+address of dst, register R1 contain i, and vector register R2 contain the
+vectorized dst[i]..dst[i+7] elements.
 
-     + dst's address stored in register 0
+     + dst's address stored in R0
      v
-     +---------------------------------------------------+
-     | 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 |
-     +---------------------------------------------------+
+     +------------------------------------------------------+
+     | 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 10 ...|
+     +------------------------------------------------------+
 
-     register 1 contains i
-     register 2 has copy of a portion of dst
+     R1 contains i
+     R2 has copy of a portion of dst
      +------------------------+
      + 0  1  2  3  4  5  6  7 |
      +------------------------+
@@ -76,36 +78,39 @@ register location overlaid at a runtime offset involving i:
     `DW_OP_lit4`
     `DW_OP_mul`
 
-    // 4. The size of the register element:
+    // 4. The size of the vector register:
     `DW_OP_lit4`
+    `DW_OP_lit8`
+    `DW_OP_mul`
 
     // 5. Make a composite location description for dst that is the memory #1
     //    with the register #2 positioned as an overlay at offset #3 of size #4:
     `DW_OP_overlay`
 
-On the first iteration of the vectorized loop the overlay would look like:
+On the first iteration of the vectorized loop, the overlay would look like:
 
          +------------------------+
-    reg2 | 0  1  2  3  4  5  6  7 |
+     R2  | 0  1  2  3  4  5  6  7 |
          +-------------------------------------------------------+
     dst  | 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 10 ... |
          +-------------------------------------------------------+
 
-A consumer accessing dst[8] would reference the unsigned int reg0+32
-but when a consumer accesses dst[2] it would reference the unsigned
-int located at the 9th byte of reg2.
+A consumer accessing dst[8] would reference the unsigned int R0+32
+but when the consumer accesses dst[2], it would reference the unsigned
+int located at byte 8 of R2.
 
-Then on the second iteration of the loop after i had been incremented by 8:
+On the second iteration of the loop after i had been incremented by 8,
+the overlay would look like
 
                                  +------------------------+
-    reg2                         | 8  9  A  B  C  D  E  F |
+     R2                          | 8  9  A  B  C  D  E  F |
          +-------------------------------------------------------+
     dst  | 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 10 ... |
          +-------------------------------------------------------+
 
-The situation would be reversed. A consumer accessing dst[8] would
-reference the unsigned int at byte 0 of reg0 but when a consumer
-accesses dst[2] it would reference the unsigned int located reg0+8
+The situation would be reversed. The consumer accessing dst[8] would
+now reference the unsigned int at byte 0 of R2 but when the consumer
+accesses dst[2], it would reference the unsigned int located at R0+8.
 
 An overlay can also be used to create a composite location without
 using `DW_OP_piece`. For example GPUs often store doubles in two
@@ -130,13 +135,13 @@ A similar construct using the piece operators would be:
     DW_OP_piece (4)
 
 However, there is a difference. The piece operator creates a location
-which is 8 bytes long. It is assumed that the value to be read are
+whose storage is 8 bytes long. It is assumed that the value to be read are
 those eight bytes. With locations on the stack, a composite piece
 location can be offset but offsetting into that location is only
 meaningful for those 8 bytes. On the other hand, an overlay creates a
-location with an intial offset of zero which extends out to the full
+location with an initial offset of zero that extends out to the full
 extent of the underlying base storage. Thus in this example, if the
-base address space is 64b long, any offset that does not overlow the
+base address space is 64b long, any offset that does not overflow the
 generic type would be valid. In this way, composite overlay locations
 are more similar to an address where the consumer determines how many
 bytes to read from the location.
@@ -144,6 +149,8 @@ bytes to read from the location.
 If producer wants to make a location more like what is created when
 using piece operators. They can use two overlays and have the first
 overlay's base be undefined.
+
+[BARIS]: I posted a comment: <https://github.com/ccoutant/dwarf-locations/pull/107/files#r2125919347>
 
     DW_OP_undefined
     DW_OP_addr 0x100
@@ -456,6 +463,17 @@ as follows:
 The lack of sensitivity to the type of the locations passed as a
 parameter is what makes `DW_OP_overlay` composites composable in a way
 that `DW_OP_piece` composites are not.
+
+[BARIS]: IMHO, this example is unfair to DW_OP_piece.  The caller should
+be expected to pass an argument of right size (i.e. a storage that is big
+enough) to the DWARF function.  E.g. the caller can have another DW_OP_piece
+to define the remaining bits so that the offset inside the function would
+always work.  It may even be a feature that the example did not work: Perhaps
+there was a producer bug and the offset error reveals it, instead of reading
+arbitrary values.  So, in my opinion, all these 3 examples of "overlay vs.
+piece" can be removed and instead we can mention the storage size implications
+of both cases.  There can be cases where one is advntageous over the other.
+It is up to the producer to use which operator works better for their case.
 
 ## Proposal
 
