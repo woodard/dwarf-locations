@@ -135,13 +135,13 @@ A similar construct using the piece operators would be:
     DW_OP_piece (4)
 
 However, there is a difference. The piece operator creates a location
-which is 8 bytes long. It is assumed that the value to be read are
+whose storage is 8 bytes long. It is assumed that the value to be read are
 those eight bytes. With locations on the stack, a composite piece
 location can be offset but offsetting into that location is only
 meaningful for those 8 bytes. On the other hand, an overlay creates a
-location with an intial offset of zero which extends out to the full
+location with an initial offset of zero that extends out to the full
 extent of the underlying base storage. Thus in this example, if the
-base address space is 64b long, any offset that does not overlow the
+base address space is 64b long, any offset that does not overflow the
 generic type would be valid. In this way, composite overlay locations
 are more similar to an address where the consumer determines how many
 bytes to read from the location.
