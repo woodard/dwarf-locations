@@ -150,6 +150,8 @@ If producer wants to make a location more like what is created when
 using piece operators. They can use two overlays and have the first
 overlay's base be undefined.
 
+[BARIS]: I posted a comment: <https://github.com/ccoutant/dwarf-locations/pull/107/files#r2125919347>
+
     DW_OP_undefined
     DW_OP_addr 0x100
     DW_OP_lit0  # offset 0
@@ -461,6 +463,17 @@ as follows:
 The lack of sensitivity to the type of the locations passed as a
 parameter is what makes `DW_OP_overlay` composites composable in a way
 that `DW_OP_piece` composites are not.
+
+[BARIS]: IMHO, this example is unfair to DW_OP_piece.  The caller should
+be expected to pass an argument of right size (i.e. a storage that is big
+enough) to the DWARF function.  E.g. the caller can have another DW_OP_piece
+to define the remaining bits so that the offset inside the function would
+always work.  It may even be a feature that the example did not work: Perhaps
+there was a producer bug and the offset error reveals it, instead of reading
+arbitrary values.  So, in my opinion, all these 3 examples of "overlay vs.
+piece" can be removed and instead we can mention the storage size implications
+of both cases.  There can be cases where one is advntageous over the other.
+It is up to the producer to use which operator works better for their case.
 
 ## Proposal
 
