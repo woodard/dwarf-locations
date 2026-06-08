@@ -243,6 +243,69 @@ After Section 2.11 "Address Classes" add:
 >    * The DWARF operations: `DW_OP_mem`, `DW_OP_aspace_bregx` and
 >    `DW_OP_aspace_deref*`.
 
+In Section 3.1 "DWARF Expression Evaluation Context" replace the
+introductory paragraph with:
+
+>    DWARF expressions are evaluated within a context provided by the
+>    debugger or other DWARF consumer. Individual operators within the
+>    expression may rely specific elements from the context provided
+>    by the DWARF consumer.
+>
+>    *For example: `DW_OP_push_lane` obviously requires the the lane to
+>    be provided by the consumer provided context and
+>    `DW_OP_form_tls_location` obviously relies on the current thread
+>    from the consumer provided context. Other operations are also
+>    dependent on consumer provided context in more subtle ways. One
+>    such example, `DW_OP_reg<N>` which relies on the current thread to
+>    identify which processor and the current call frame to identify
+>    the location where the value of that register currently resides.*
+>
+
+Move this paragraph from the end of section 3.1 and make it a second
+non-normative paragraph.
+
+>    *A DWARF expression may be able to be evaluated without a thread,
+>    call frame, lane, program counter, or an architecture context
+>    entry. For example, the location of a global variable may be able
+>    to be evaluated without such context, while the location of local
+>    variables in a stack frame cannot be evaluated without additional
+>    context.*
+
+Introduce a new section 3.1.1 as follows:
+
+>    3.1.1 Context Binding & Lifespan
+>
+>    The current context is bound to location when the location is
+>    created. This allows a location to be used in a different context
+>    from when it was created. Thus a location can be subsequently be
+>    cached or reused so long as the elements of the context that the
+>    location depends on remain the same. However if part of the
+>    context that the expression references changes, then the location
+>    is no longer valid.
+>
+>    *For example: if a DWARF expression for a variable includes a
+>    reference to a register. The debugger's context will provide the
+>    the thread. The thread will point to the processor on which that
+>    thread is currently executing. That allows the debugger to
+>    unambiguously know which of the system's processor's to read the
+>    register's value from. If the user then continues execution of
+>    the process, the system may have moved the thread to a different
+>    processor within the system. Therefore, the value may need to be
+>    fetched from a different processor even though the register
+>    within the processor remains the same. Since one of the members
+>    that make up the thread within the consumer's context has
+>    changed, a cached location cannot be reused.*
+>
+>    *Traditionally, locations that refer to addresses in memory have
+>    not been sensitive to context and therefore could be cached and
+>    reused. However, memory locations in address spaces other than
+>    the default address space may be defined to be local to a
+>    particular thread. Therefore, care must be taken when caching or
+>    reusing these locations.*
+
+Keep the rest of the text from section 3.1 but put it under a new
+section 3.1.2 "Context Elements".
+
 In Section 3.7 "Memory Locations", add the following at the end of the
 first paragraph:
 
