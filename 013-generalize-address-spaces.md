@@ -229,6 +229,13 @@ After Section 2.11 "Address Classes" add:
 >    scratch pad memory represented by a different DWARF address space
 >    than the default for the source language memory space.*
 >
+>    Since the size of an address within an alternative address space
+>    can be different than the target's default address space, the
+>    type and therefore the size of the offset into that address space
+>    will be as if `DW_OP_deref_type` were used to reference a DIE of
+>    an integral base type in the current compilation unit whose size
+>    and encoding match addresses in that address space.
+>
 >    Each address space is assigned a positive integral number by the
 >    ABI committee for that target architecture.  Although DWARF
 >    address space identifiers are target architecture specific,
@@ -248,8 +255,8 @@ introductory paragraph with:
 
 >    DWARF expressions are evaluated within a context provided by the
 >    debugger or other DWARF consumer. Individual operators within the
->    expression may rely specific elements from the context provided
->    by the DWARF consumer.
+>    expression may refer to specific elements from the context
+>    provided by the DWARF consumer.
 >
 >    *For example: `DW_OP_push_lane` obviously requires the the lane to
 >    be provided by the consumer provided context and
@@ -260,9 +267,14 @@ introductory paragraph with:
 >    identify which processor and the current call frame to identify
 >    the location where the value of that register currently resides.*
 >
+>    If a location expression describing a variable uses operators
+>    which refer to elements from the consumer provided context the
+>    location is bound to the instance of the context as if
+>    `DW_OP_push_object_location` were executed in the context of that
+>    variable's instance.
 
-Move this paragraph from the end of section 3.1 and make it a second
-non-normative paragraph.
+Move this paragraph from the end of section 3.1 and place it after the
+paragraph above.
 
 >    *A DWARF expression may be able to be evaluated without a thread,
 >    call frame, lane, program counter, or an architecture context
@@ -309,8 +321,8 @@ section 3.1.2 "Context Elements".
 In Section 3.7 "Memory Locations", add the following at the end of the
 first paragraph:
 
->    `DW_ASPACE_default` is the name for the default address space
->    identifier.
+>    If omitted, this defaults to `DW_ASPACE_default`, the name for
+>    the default address space identifier.
 
 After the definition of `DW_OP_addrx` add:
 
@@ -319,35 +331,11 @@ After the definition of `DW_OP_addrx` add:
 >       ![DW_OP_mem](../images/issue-260127-1/op-mem2.png)
 >
 >        `DW_OP_mem` pops top two stack entries, an offset A and an
->    address space identifier AS. The offset A must be an
->    integral value which represents the offset into the
->    address space AS. The address space AS must be an
->    integral type value that represents a target architecture
->    specific address space identifier.
->
->        It pushes a memory location L within the address space AS whose
->    offset is A, potentially modified by the following rules.
->
->        In the case where the address size used within the address space
->    AS is smaller than the size of A, the address is truncated to the
->    size of the address size used within AS.
->
->        In the case where the address size used within the address space
->    AS is larger than the size of A, the address is zero extended to
->    the size of the address size used within AS.
->
->        If AS is an address space that is specific to context elements,
->    then the pushed location L corresponds to the location storage
->    associated with the current context when the `DW_OP_mem`
->    operation is evaluated, not the context when the location
->    returned by the evaluation of `DW_OP_mem` is used.
->
->        *For example, if AS is for per thread storage, then the location
->    storage corresponds to the current thread. Therefore if the
->    location is accessed by an operation, the location storage
->    selected when the location was created is accessed, and not the
->    location storage associated with the current context of the
->    access operation.*
+>    address space identifier AS. The offset A must be an integral
+>    value which represents a valid offset into the address space
+>    AS. The address space AS must be an integral type value that
+>    represents a target architecture specific address space
+>    identifier.
 >
 >        *`DW_OP_addr(X)` is a more compact form of `DW_OP_lit0;
 >    DW_OP_constNu(X); DW_OP_mem`.*
@@ -389,22 +377,10 @@ the following paragraph:
 >    `DW_TAG_rvalue_reference_type`) may have a `DW_AT_address_space`
 >    attribute with a constant value AS representing an architecture
 >    specific DWARF address space (see 2.12 "Address Spaces"). If
->    omitted, this defaults to `DW_ASPACE_default`. When a location is
->    created which refers to an instance of this variable there are
->    three components to this location: the context, the address
->    space, and the offset into that address space. If the location
->    refers to a context dependent address space, the location is
->    bound to the instance of that address space as if
->    `DW_OP_push_object_location` were executed in the context of that
->    variable's instance. The address space of that location is set as
->    if the expression `DW_OP_constu` AS; `DW_OP_mem` were evaluated
->    for that instance of the variable. Since the size of an address
->    within an alternative address space can be different than the
->    target's default address space, the type and therefore the size
->    of the offset into that address space will be as if
->    `DW_OP_deref_type` were used to reference a DIE of an integral
->    base type in the current compilation unit whose size and encoding
->    match addresses in that address space.
+>    omitted, this defaults to `DW_ASPACE_default`. The address space
+>    of a memory location which is not in the default address space is
+>    set as if the expression `DW_OP_constu` AS; `DW_OP_mem` were
+>    evaluated for that instance of the variable.
 
 In Section 7.1.1.1 "Contents of the Name Index", replace the bullet:
 
