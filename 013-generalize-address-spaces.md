@@ -322,7 +322,7 @@ In Section 3.7 "Memory Locations", add the following at the end of the
 first paragraph:
 
 >    If omitted, this defaults to `DW_ASPACE_default`, the name for
->    the default address space identifier.
+>    the default address space.
 
 After the definition of `DW_OP_addrx` add:
 
