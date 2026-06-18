@@ -321,7 +321,7 @@ section 3.1.2 "Context Elements".
 In Section 3.7 "Memory Locations", add the following at the end of the
 first paragraph:
 
->    If omitted, this defaults to `DW_ASPACE_default`, the name for
+>    When not specified the default is `DW_ASPACE_default`, the name for
 >    the default address space.
 
 After the definition of `DW_OP_addrx` add:
@@ -330,8 +330,8 @@ After the definition of `DW_OP_addrx` add:
 >
 >       ![DW_OP_mem](../images/issue-260127-1/op-mem2.png)
 >
->        `DW_OP_mem` pops top two stack entries, an offset A and an
->    address space identifier AS. The offset A must be an integral
+>        `DW_OP_mem` pops top two stack entries, an address A and an
+>    address space identifier AS. The address A must be an integral
 >    value which represents a valid offset into the address space
 >    AS. The address space AS must be an integral type value that
 >    represents a target architecture specific address space
@@ -381,6 +381,9 @@ the following paragraph:
 >    of a memory location which is not in the default address space is
 >    set as if the expression `DW_OP_constu` AS; `DW_OP_mem` were
 >    evaluated for that instance of the variable.
+
+**FIXME: Markus points out that this is not correct for optimized out
+or implicit pointers.
 
 In Section 7.1.1.1 "Contents of the Name Index", replace the bullet:
 
