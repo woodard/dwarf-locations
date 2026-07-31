@@ -375,25 +375,22 @@ change point 5 "Current thread" as follows:
 >    <ins>On a multi-processor target a current thread is required to
 >    identify which instance of a register any register operation is
 >    referring to.</ins>
->
->    <ins>*The current thread identifies a current thread of execution. By
->    extension, the current thread is also used by consumers to
->    identify which processor within a multi-processor target, a
->    thread is executing on. The processor that a thread is executing
->    on determines which instance of a register to refer to, and when
->    a target has address spaces that are local to a particular
->    processor, it defines which instance of that address space it
->    should refer to.*</ins>
->
+>>
 >    <ins>On multi-processor targets that support address spaces that are
 >    local to a processor or a thread, a current thread may be
 >    required to identify the instance of the address space that a
 >    memory operation refers to.</ins>
 >
->    <ins>*When debugging a multi-threaded program, the current thread may
->    be selected by a user command that focuses on a specific thread,
->    or it may be selected automatically when the running thread stops
->    at a breakpoint.*</ins>
+>    <ins>*When debugging a multi-threaded program, the current thread
+>    may be selected by a user command that focuses on a specific
+>    thread, or it may be selected automatically when the running
+>    thread stops at a breakpoint. The current thread is then used by
+>    the consumers to identify which processor within a
+>    multi-processor target that a thread is executing on. The
+>    processor then determines which instance of a register to refer
+>    to and when a target has address spaces that are local to a
+>    particular processor, it defines which instance of that address
+>    space it should refer to.*</ins>
 >
 >    A current thread is required for the DW_OP_form_tls_location
 >    operation (see Section 3.2 on page 49) which provides access to
@@ -429,9 +426,10 @@ first paragraph:
 >    object or other entity in memory. On architectures that support
 >    multiple address spaces, a memory location identifies storage
 >    associated with the address space.
->    <ins>If not specified, the storage associated with a memory location
->    defaults to `DW_ASPACE_default`, the name for the default
->    address space.</ins>
+>    <ins>All memory locations include an address space. If not
+>    otherwise specified the storage associated with a memory location
+>    defaults to `DW_ASPACE_default`, the name for the default address
+>    space.</ins>
 
 After the definition of `DW_OP_addrx` add:
 
@@ -439,7 +437,7 @@ After the definition of `DW_OP_addrx` add:
 >
 >       ![DW_OP_mem](../images/issue-260127-1/op-mem2.png)
 >
->        `DW_OP_mem` pops top two stack entries, an address A and an
+>        `DW_OP_mem` pops top two stack entries, an offset A and an
 >    address space identifier ASPACE. The address A must be an
 >    integral value that represents a valid offset into the address
 >    space ASPACE. The address space ASPACE must be an integral
