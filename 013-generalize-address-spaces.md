@@ -398,7 +398,7 @@ change point 5 "Current thread" as follows:
 >    <ins>On a multi-processor target a current thread is required to
 >    identify which instance of a register any register operation is
 >    referring to.</ins>
->>
+>
 >    <ins>On multi-processor targets that support address spaces that are
 >    local to a processor or a thread, a current thread may be
 >    required to identify the instance of the address space that a
