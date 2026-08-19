@@ -431,43 +431,60 @@ This would leave the offsets between 8 (end of `reg0`) and 15
 ## Proposal
 
 ### Section 3.12
-In Section 3.12 Composite Locations, keep the following introductory paragraphs:
+
+Replace the introductory paragraphs in Section 3.12 Composite
+Locations, with:
 
 > A composite location represents the location of an object or value
-> that does not exist in a single block of contiguous storage (e.g.,
-> as the result of compiler optimization where part of the object is
-> promoted to a register). It consists of a (possibly empty) sequence
-> of pieces, where each piece maps a fixed range of bits from the
-> object onto a corresponding range of bits at a new (sub-)location.
+> that does not exist in a single block of contiguous storage (for
+> example, as the result of compiler optimization where part of the
+> object is promoted to a register). Its storage consists of a
+> (possibly empty) sequence of <del>pieces</del><ins>part></ins>,
+> where each <del>piece</del><ins>part</ins> maps a <del>fixed</del>
+> range of bits from the object onto a corresponding range of bits at
+> a new (sub-)location.
 >
-> The pieces of a composite location are contiguous, so that the size
-> of the composite storage is the sum of the sizes of the individual
-> pieces, and each piece covers a range of bits immediately following
-> the previous piece. The maximum size of a block of composite storage
-> is the size of the largest address space or register.
-
-Then replace the sentence:
-
-> Typically, the size of a composite storage is the same as that of
-> the object it describes.
-
-With:
-
-> Typically, the size of a composite storage is at least as large as
-> the object it describes.
-
-Then after:
-
-> If the composite storage is smaller than the object, the remaining
-> bits of the object are treated as undefined.
+> <ins>The overlays operator begins by mapping the entire extent of
+> base storage into composite storage. Then an opaque overlay is
+> applied such that the bits from the overlay hide the cooresponding
+> bits from the base storage starting from the offset where the
+> overlay is placed through the overlays extent.</ins>
 >
-> In the process of fetching a value from a composite location, the consumer
-> may need to fetch and assemble bits from more than one piece.
+> <ins>*Typically this creates a block of storage which is the same
+> size as the base storage for the overlay. The exceptions are when
+> the overlay either begins or extends beyond the extent of the base
+> storage.*</ins>
+>
+> <ins>Instead of mapping the entire base storage into composite
+> storage. The piece operators excerpt parts of storage and
+> concatenate the pieces together.</ins> <del>The pieces of a block of
+> composite storage are contiguous, so that
+> the</del><ins>Therefore,</the> the size of the composite storage is
+> the sum of the sizes of the individual pieces, and each piece covers
+> a range of bits immediately following the previous piece.
+>
+> *Typically, the size of a composite storage is the same as that of
+> the object it describes.*
+>
+> *Typically, the size of a composite storage created with pieces is
+> the same as that of the object it describes.*
+>
+> The maximum size of a block of composite storage is the size of the
+> largest address space or register.  If the composite storage is
+> smaller than the object, the remaining bits of the object are
+> treated as undefined.
 
-Add the following new paragraph:
+> *In the process of fetching a value from a composite location, the
+> consumer may need to fetch and assemble bits from more than one
+> piece.*
 
-> Composite locations can be formed by two methods: piece operations, which
-> operate as in previous versions of DWARF, and overlay operations.
+> *<ins>Another way to think of overlays rather than as an opaquie mask
+> over the specified bits of base storage is to think of them as
+> dividing the base storage into parts that are concatenating as if
+> they were assembled with the piece operators. In most cases, this
+> results in three parts: The part of the base storage before the
+> overlay, the overlay itself, and the part after the extent of the
+> overlayed region.</ins>*
 
 Move the rest of the existing section into subsection 3.12.1 Piece Operations:
 
@@ -476,39 +493,41 @@ Move the rest of the existing section into subsection 3.12.1 Piece Operations:
 >
 >  ...
 
-
 ### Add Section 3.12.2
 Add a new Section 3.12.2 after "Composite Piece Description Operations",
 called "Overlay Operations".
 
-> *Conceptually, these new composite operators create a new composite
-> location which is pushed on the stack with an offset the same as the
-> base location, and composite storage that is the base location
-> storage with a piece of the overlay storage spliced in, extending
-> the base storage if necessary with undefined storage.*
+> *Conceptually, overlay operators create a new composite location
+> which is pushed on the stack with an offset the same as the base
+> location, and composite storage that is the base location storage
+> with an opaque range of the overlay storage hiding the corresponding
+> bits from the base storage.  If necessary, composite storage can
+> extend beyond the extent of base storage. adding undefined storage
+> when necessary to bridge a gap.*
 >
 > `DW_OP_overlay`
 >
 >    <[location] base location> <[location] overlay location> <[integral] base offset> <[unsigned] overlay width> → <[location] composite location>
 >
->   `DW_OP_overlay` pushes a new composite location whose storage is the
->   result of replacing a slice in the storage of `base location` with
->   a slice from the storage of `overlay location`.
+>   `DW_OP_overlay` pushes a new composite location whose storage is
+>   the result of replacing a selection of bytes in the storage of
+>   `base location` with the specified bytes from the storage of
+>   `overlay location`.
 >
->   The slice of bytes obtained from the storage of `overlay location`
->   is referred to as the `overlay`. The `overlay` begins at `overlay
->   location` and has a size of `overlay width`. The `overlay width`
->   cannot extend beyond the bounds of the storage of `overlay
+>   The selection of bytes obtained from the storage of `overlay
+>   location` is referred to as the `overlay`. The `overlay` begins at
+>   `overlay location` and has a size of `overlay width`. The `overlay
+>   width` cannot extend beyond the bounds of the storage of `overlay
 >   location` or else the expression is invalid.
 >
->   The slice of bytes replaced in the storage of `base location` is
->   referred to as the `overlay base`. It begins at `base location`
+>   The selection of bytes replaced in the storage of `base location`
+>   is referred to as the `overlay base`. It begins at `base location`
 >   offset by `base offset` and has a size of `overlay width`.
 >
 >   *If the `overlay width` is zero and offset is within the bounds of
->   the base location's storage, then the consumer may leave the `base
->   location` on the top of the stack rather than creating composite
->   storage.*
+>   the base location's storage, then the as an optimization consumer
+>   may leave the `base location` on the top of the stack rather than
+>   creating composite storage.*
 >
 >   If the `overlay base` extends beyond the bounds of the storage of
 >   `base location`, the storage of the resulting location is first
@@ -527,16 +546,17 @@ called "Overlay Operations".
 >    <[location] base location> <[location] overlay location> <[integral] base offset in bits> <[unsigned] overlay width in bits> → <[location] composite location>
 >
 >   `DW_OP_bit_overlay` pushes a new composite location whose storage
->   is the result of replacing a slice in the storage of `base
->   location` with a slice from the storage of `overlay location`.
+>   is the result of replacing a selection of bits in the storage of
+>   `base location` with the specified bits from the storage of `overlay
+>   location`.
 >
->   The slice of bits obtained from the storage of `overlay location`
+>   The selection of bits obtained from the storage of `overlay location`
 >   is referred to as the `overlay`. The `overlay` begins at `overlay
 >   location` and has a size in bits of `overlay width`. The `overlay
 >   width` cannot extend beyond the end of the overlay's storage or
 >   else the expression is invalid.
 >
->   The slice of bits replaced in the storage of `base location` is
+>   The selection of bits replaced in the storage of `base location` is
 >   referred to as the `overlay base`. It begins at `base location`
 >   offset by `base offset` and has a size of `overlay width` in bits.
 >
