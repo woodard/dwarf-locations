@@ -465,8 +465,8 @@ Locations, with:
 > the sum of the sizes of the individual pieces, and each piece covers
 > a range of bits immediately following the previous piece.
 >
-> *Typically, the size of a composite storage created with pieces is
-> the same as that of the object it describes.*
+> *Typically, the size of a composite storage <ins>created with
+> pieces</ins> is the same as that of the object it describes.*
 >
 > <ins>The maximum size of a block of composite storage is the size of the
 > largest address space.</ins> If the composite storage is smaller than the
