@@ -439,12 +439,13 @@ Locations, with:
 > that does not exist in a single block of contiguous storage (for
 > example, as the result of compiler optimization where part of the
 > object is promoted to a register). Its storage consists of a
-> (possibly empty) sequence of <del>pieces</del><ins>part></ins>,
+> (possibly empty) sequence of <del>pieces</del><ins>parts</ins>,
 > where each <del>piece</del><ins>part</ins> maps a <del>fixed</del>
 > range of bits from the object onto a corresponding range of bits at
-> a new (sub-)location.
+> a new (sub-)location. There are two way to make composite storage
+> overlays and pieces.
 >
-> <ins>The overlays operator begins by mapping the entire extent of
+> <ins>The overlay operators begin by mapping the entire extent of
 > base storage into composite storage. Then an opaque overlay is
 > applied such that the bits from the overlay hide the cooresponding
 > bits from the base storage starting from the offset where the
@@ -453,7 +454,8 @@ Locations, with:
 > <ins>*Typically this creates a block of storage which is the same
 > size as the base storage for the overlay. The exceptions are when
 > the overlay either begins or extends beyond the extent of the base
-> storage.*</ins>
+> storage. One example where this happens is when an overlay is used
+> to concatenate two locations.*</ins>
 >
 > <ins>Instead of mapping the entire base storage into composite
 > storage. The piece operators excerpt parts of storage and
@@ -463,16 +465,12 @@ Locations, with:
 > the sum of the sizes of the individual pieces, and each piece covers
 > a range of bits immediately following the previous piece.
 >
-> *Typically, the size of a composite storage is the same as that of
-> the object it describes.*
->
 > *Typically, the size of a composite storage created with pieces is
 > the same as that of the object it describes.*
 >
-> The maximum size of a block of composite storage is the size of the
-> largest address space or register.  If the composite storage is
-> smaller than the object, the remaining bits of the object are
-> treated as undefined.
+> <ins>The maximum size of a block of composite storage is the size of the
+> largest address space.</ins> If the composite storage is smaller than the
+> object, the remaining bits of the object are treated as undefined.
 
 > *In the process of fetching a value from a composite location, the
 > consumer may need to fetch and assemble bits from more than one
@@ -498,14 +496,14 @@ Add a new Section 3.12.2 after "Composite Piece Description Operations",
 called "Overlay Operations".
 
 > *Conceptually, overlay operators create a new composite location
-> which is pushed on the stack with an offset the same as the base
-> location, and composite storage that is the base location storage
-> with an opaque range of the overlay storage hiding the corresponding
-> bits from the base storage.  If necessary, composite storage can
-> extend beyond the extent of base storage. adding undefined storage
-> when necessary to bridge a gap.*
+> which is pushed on the stack with an offset remaining the same as
+> the base location. The resulting composite storage is the same as
+> the base location storage with an opaque range of the overlay
+> storage hiding the corresponding bits from the base storage.  If
+> necessary, composite storage can extend beyond the extent of base
+> storage. adding undefined storage when necessary to bridge a gap.*
 >
-> `DW_OP_overlay`
+> 1. `DW_OP_overlay`
 >
 >    <[location] base location> <[location] overlay location> <[integral] base offset> <[unsigned] overlay width> → <[location] composite location>
 >
