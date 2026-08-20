@@ -34,8 +34,8 @@ operators that simply pop arguments from the current, shared stack.
 Yet another limitation is one of natural composition. With the piece
 operators, it is not possible to start from a pre-computed location
 and replace some part of it. For example when a field of a structure
-or an array element is promoted to a register for a specific PC range.
-The producer must instead build the composite piece by piece, which
+or an array element is promoted to a register for a specific PC range,
+the producer must instead build the composite piece by piece, which
 results in DWARF expressions that are not as compact as they could be.
 
 It is important to emphasize that these are not limitations of the
