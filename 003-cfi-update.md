@@ -75,19 +75,7 @@ DWARF expressions with their register rules.
 
 ### New Operator:
 
-**FIXME: Justification for new operator** **Ben: This supposed to
-partially replace DW_OP_entry_value.  This is going to need a strong
-justification why DW_OP_entry_value is not sufficient**
 
-**jakub: the current design comes from the intent to make it useful
-for 2 different purposes; one is the most common, gdb unwinds the
-stack, looks at the call site info and if it finds usable values
-there, propagates into DW_OP_entry_value in the callee the other is
-with tools like systemtap in mind; if you know ahead you'll stop in
-function xyz and will need to ask for value of some variable, if it
-uses DW_OP_entry_value, you can simply add another breakpoint at the
-start of the function and remember values that will be needed later,
-and then just use them when you hit the final breakpoint**
 
 As described in [DWARF Operations to Create Vector Composite Location
 Descriptions], a DWARF expression involving the set of SIMT lanes
@@ -179,26 +167,6 @@ To:
 >    evaluated without additional context.*
 
 
-In Section 3.6 Conxtext Query Perations add the following operation
-after `DW_OP_push_lane`:
-
-> 5.  `DW_OP_call_frame_entry_reg`([ULEB] R)
->
->     → <[location] register's location>
->
->     `DW_OP_call_frame_entry_reg` has a single ULEB128 integer
->     operand that represents a target architecture register number R.
->
->     It pushes a location description that holds the value of
->     register R on entry to the current subprogram as defined by the
->     call frame information (see Section 7.4 "Call Frame
->     Information").
->
->     If there is no call frame information defined, then the default
->     rules for the target architecture are used. If the register rule
->     is <i>undefined</i>, then the undefined location description is
->     pushed.  If the register rule is <i>same value</i>, then a
->     register location description for R is pushed.
 
 In Section 3.7 Memory Locations
 
@@ -443,17 +411,6 @@ Change the second bullet to:
 In the third bullet, add `DW_OP_entry_value`. Change "is not
 meaningful...because its use would be circular" to "are not allowed
 because their use would be circular."
-
-Add the following bullet to the end of the list:
-
-> * `DW_OP_call_frame_entry_reg` is not allowed if evaluating E causes a
->   circular dependency between `DW_OP_call_frame_entry_reg` operations.
->
->   *For example, if a register R1 has a `DW_CFA_def_cfa_expression`
->   instruction that evaluates a `DW_OP_call_frame_entry_reg`
->   operation that specifies register R2, and register R2 has a
->   `DW_CFA_def_cfa_expression` instruction that that evaluates a
->   `DW_OP_call_frame_entry_reg` operation that specifies register R1.*
 
 **Ben: Huh? The following look the same**
 
@@ -729,23 +686,6 @@ specified by R."
 
 In item 12, `DW_CFA_restore_extended`, change "a register number" to
 "a register number R", and add a comma before "except".
-
-In Section 8.7.1 "Operation Expressions" of [Allow location
-description on the DWARF evaluation stack], add the following row to
-Table 8.9 "DWARF Operation Encodings":
-
-    ---------------------------------------------------------------------------
-
-    Table 8.9: DWARF Operation Encodings
-    ================================== ===== ======== =========================
-    Operation                          Code  Number   Notes
-                                             of
-                                             Operands
-    ================================== ===== ======== =========================
-    DW_OP_call_frame_entry_reg         TBA      1     ULEB128 register number
-    ================================== ===== ======== =========================
-
-    ---------------------------------------------------------------------------
 
 In section 8.23 Call Frame Information in Table 8.29
 

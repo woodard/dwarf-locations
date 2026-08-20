@@ -1,0 +1,6 @@
+docs: decouple DW_OP_call_frame_entry_reg from CFI update proposal
+
+The description of the new DW_OP_call_frame_entry_reg operator has been 
+moved from the broader 003-cfi-update.md proposal into its own 
+dedicated file (017-call-frame-entry-registers.md) to improve 
+modularity and clarity.
