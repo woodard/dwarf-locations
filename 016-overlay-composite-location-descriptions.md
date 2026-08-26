@@ -12,12 +12,19 @@ themselves and the operators used to construct them.
 Currently, you can create composite storage with the
 `DW_OP_composite`, `DW_OP_piece`, and `DW_OP_bit_piece` operators.
 The `DW_OP_bit_piece` operator in particular has the problem that its
-offset operand depends on the type of location. This behavior
-conflicts with the unified location storage abstraction provided by
-the [locations on the
-stack](https://dwarfstd.org/issues/230524.1.html) proposal. It should
-be noted that this is a problem with the operator itself, not with
-composite storage or the concept of pieces.
+offset operand depends on the kind of storage that the location
+references. If it is register storage then the offset is interpreted
+from the least significant bit end of the register; if it is memory
+storage the offset is interpreted using the bit numbering and
+direction conventions that are appropriate to the current language on
+the target system; and if implicit storage it uses the least
+significant bits of the value in that storage. This behavior conflicts
+with the unified location storage abstraction provided by the
+[locations on the stack](https://dwarfstd.org/issues/230524.1.html)
+concept which has the goal of making the behavior of all operations
+agnostic to the storage kind they operate on.  It should be noted that
+this is a problem with the operator itself, not with composite storage
+or the concept of pieces.
 
 Another limitation of the piece operators is that their operands are
 inline operands, and thus cannot be computed at runtime. This was
@@ -442,14 +449,13 @@ Locations, with:
 > (possibly empty) sequence of <del>pieces</del><ins>parts</ins>,
 > where each <del>piece</del><ins>part</ins> maps a <del>fixed</del>
 > range of bits from the object onto a corresponding range of bits at
-> a new (sub-)location. There are two way to make composite storage
+> a new (sub-)location. There are two ways to make composite storage
 > overlays and pieces.
 >
-> <ins>The overlay operators begin by mapping the entire extent of
-> base storage into composite storage. Then an opaque overlay is
-> applied such that the bits from the overlay hide the cooresponding
-> bits from the base storage starting from the offset where the
-> overlay is placed through the overlays extent.</ins>
+> <ins>Overlay operators first map the entire extent of the base
+> storage into composite storage. An opaque overlay is then applied,
+> masking the corresponding bits of the base storage from the
+> overlay's offset through its entire extent.</ins>
 >
 > <ins>*Typically this creates a block of storage which is the same
 > size as the base storage for the overlay. The exceptions are when
@@ -523,8 +529,8 @@ called "Overlay Operations".
 >   offset by `base offset` and has a size of `overlay width`.
 >
 >   *If the `overlay width` is zero and offset is within the bounds of
->   the base location's storage, then the as an optimization consumer
->   may leave the `base location` on the top of the stack rather than
+>   the base location's storage, then as an optimization consumer may
+>   leave the `base location` on the top of the stack rather than
 >   creating composite storage.*
 >
 >   If the `overlay base` extends beyond the bounds of the storage of
