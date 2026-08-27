@@ -41,12 +41,17 @@ DWARF expression in a `DW_OP_entry_value` expression block.
 
 We propose adding a new operator `DW_OP_call_frame_entry_reg`. This
 would take a single ULEB128 inline parameter as a register
-number. Then it would use CFI to push the current location in the
-current frame of that register in the previous frame.
+number. Then it would use Call Frame Information (See Section 7.4) to
+virtually unwind the frame and push the current location of that
+register in the previous frame.
 
 This operator is implementable in most consumers because it is finite
-in scope. It only handlse situations which can be handled with CFI. It
-does not expect any arbitrary DWARF expression to be evaluated.
+in scope. It only handles situations which can be handled with
+existing call frame information structures. It does not expect any
+arbitrary DWARF expression to be evaluated. The only additional burden
+is that it may require producers to define rules for additional
+registers such as caller saved registers that they would not normally
+need to be represented in the call frame information.
 
 ### Keep DW_OP_entry_value
 
@@ -123,10 +128,7 @@ after `DW_OP_push_lane`:
 >     Information").
 >
 >     If there is no call frame information defined, then the default
->     rules for the target architecture are used. If the register rule
->     is <i>undefined</i>, then the undefined location description is
->     pushed.  If the register rule is <i>same value</i>, then a
->     register location description for R is pushed.
+>     rules for the target architecture are used.
 >
 >     *Producers are reminded that there must be a corresponding CFI
 >     entry for the specified register spanning the range of addresses
@@ -180,8 +182,9 @@ following restrictions:".
 
 Add the following bullet to the end of the list:
 
-> * `DW_OP_call_frame_entry_reg` is not allowed if evaluating E causes a
->   circular dependency between `DW_OP_call_frame_entry_reg` operations.
+> * `DW_OP_call_frame_entry_reg` is not allowed if evaluating the
+>   expression causes a circular dependency between
+>   `DW_OP_call_frame_entry_reg` operations.
 >
 >    *For example, if a register R1 has a `DW_CFA_def_cfa_expression`
 >    instruction that evaluates a `DW_OP_call_frame_entry_reg`
@@ -205,3 +208,4 @@ Table 8.9 "DWARF Operation Encodings":
     ================================== ===== ======== =========================
 
     ---------------------------------------------------------------------------
+**FIX Me: Change example DWARF in D15.1 D15.2 and F2.3. Consider replacing examples in D1.3**
