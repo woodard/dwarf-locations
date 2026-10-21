@@ -247,6 +247,8 @@ the following:
 > saved at the memory address pointed to by the location L, where L is
 > the location of the current CFL offset by N bytes.
 >
+**move below**
+
 > *Since the CFL location for this register rule is required to be a
 > memory location, the value of val_offset(N) will also be a memory
 > location since it is offsetting the CFL location by N
@@ -360,11 +362,10 @@ Change the last non-normative paragraph to:
 > Call frame instructions to which these restrictions apply include
 > DW_CFL_def_cfa_expression, DW_CFL_expression, and DW_CFL_val_expression.
 
-**Ben: add operands to 7.4.2.[1-5]**
+In Sections 7.4.2[1-5] change the "CFA" in constants to "CFL".
 
 In Section 7.4.2.1 Row Creation Instructions add headers like were
 done in operation headers:
-
 
 > 1.  `DW_CFL_set_loc (generic address)`
 > 2.  `DW_CFL_advance_loc (opcode_encoded delta)`
@@ -375,102 +376,101 @@ done in operation headers:
 In Section 7.4.2.2 "CFA Definition Instructions", replace the
 description of the six CFI instructions with the following:
 
-> 1.  `DW_CFA_def_cfa (ULEB register, ULEB byte displacement)`
+> 1.  `DW_CFL_def_cfl (ULEB register, ULEB byte displacement)`
 >
->     The `DW_CFA_def_cfa` instruction takes two ULEB128 operands
+>     The `DW_CFL_def_cfl` instruction takes two ULEB128 operands
 >     representing a register number R and a (non-factored) byte
 >     displacement B. AS is set to the target architecture default
 >     address space identifier. The required action is to define the
->     current CFA rule to be equivalent to the result of evaluating
+>     current CFL rule to be equivalent to the result of evaluating
 >     the DWARF expression `DW_OP_constu AS; DW_OP_aspace_bregx R, B`
 >     as a location description.
 >
-> 2.  `DW_CFA_def_cfa_sf (ULEB register, LEB factored byte
+> 2.  `DW_CFL_def_cfl_sf (ULEB register, LEB factored byte
 >     displacement)`
 >
->     The `DW_CFA_def_cfa_sf` instruction takes two operands: a
+>     The `DW_CFL_def_cfl_sf` instruction takes two operands: a
 >     ULEB128 value representing a register number R and a LEB128
 >     factored byte displacement B. AS is set to the target
 >     architecture default address space identifier. The required
->     action is to define the current CFA rule to be equivalent to the
+>     action is to define the current CFL rule to be equivalent to the
 >     result of evaluating the DWARF expression `DW_OP_constu AS;
 >     DW_OP_aspace_bregx R, B * data_alignment_factor` as a location
 >     description.
 >
->     [non-normative] The action is the same as `DW_CFA_def_cfa`,
->     except that the second operand is signed and factored.
+>     *The action is the same as `DW_CFL_def_cfl`,
+>     except that the second operand is signed and factored.*
 >
-> 3.  `DW_CFA_def_cfa_register (ULEB register)`
+> 3.  `DW_CFL_def_cfl_register (ULEB register)`
 >
->     The `DW_CFA_def_cfa_register` instruction takes a single ULEB128
+>     The `DW_CFL_def_cfl_register` instruction takes a single ULEB128
 >     operand representing a register number R. The required action is
->     to define the current CFA rule to be equivalent to the result of
+>     to define the current CFL rule to be equivalent to the result of
 >     evaluating the DWARF expression `DW_OP_constu AS;
 >     DW_OP_aspace_bregx R, B` as a location description. B and AS are
->     the old CFA byte displacement and address space respectively.
+>     the old CFL byte displacement and address space respectively.
 >
->     If the subprogram has no current CFA rule, or the rule was
->     defined by a `DW_CFA_def_cfa_expression` instruction, then the
+>     If the subprogram has no current CFL rule, or the rule was
+>     defined by a `DW_CFL_def_cfl_expression` instruction, then the
 >     DWARF is ill-formed.
 >
-> 4.  `DW_CFA_def_cfa_offset (ULEB byte displacement)`
+> 4.  `DW_CFL_def_cfl_offset (ULEB byte displacement)`
 >
->     The `DW_CFA_def_cfa_offset` instruction takes a single ULEB128
+>     The `DW_CFL_def_cfl_offset` instruction takes a single ULEB128
 >     operand representing a (non-factored) byte displacement B. The
->     required action is to define the current CFA rule to be
+>     required action is to define the current CFL rule to be
 >     equivalent to the result of evaluating the DWARF expression
 >     `DW_OP_constu AS; DW_OP_aspace_bregx R, B` as a location
->     description. R and AS are the old CFA register number and
+>     description. R and AS are the old CFL register number and
 >     address space respectively.
 >
->     If the subprogram has no current CFA rule, or the rule was
->     defined by a `DW_CFA_def_cfa_expression` instruction, then the
+>     If the subprogram has no current CFL rule, or the rule was
+>     defined by a `DW_CFL_def_cfl_expression` instruction, then the
 >     DWARF is ill-formed.
 >
-> 5.  `DW_CFA_def_cfa_offset_sf (LEB factored byte displacement)`
+> 5.  `DW_CFL_def_cfl_offset_sf (LEB factored byte displacement)`
 >
->     The `DW_CFA_def_cfa_offset_sf` instruction takes a LEB128
+>     The `DW_CFL_def_cfl_offset_sf` instruction takes a LEB128
 >     operand representing a factored byte displacement B. The
->     required action is to define the current CFA rule to be
+>     required action is to define the current CFL rule to be
 >     equivalent to the result of evaluating the DWARF expression
 >     `DW_OP_constu AS; DW_OP_aspace_bregx R, B *
 >     data_alignment_factor` as a location description. R and AS are
->     the old CFA register number and address space respectively.
+>     the old CFL register number and address space respectively.
 >
->     If the subprogram has no current CFA rule, or the rule was
->     defined by a `DW_CFA_def_cfa_expression` instruction, then the
+>     If the subprogram has no current CFL rule, or the rule was
+>     defined by a `DW_CFL_def_cfl_expression` instruction, then the
 >     DWARF is ill-formed.
 >
->     [non-normative] The action is the same as
->     `DW_CFA_def_cfa_offset`, except that the operand is signed and
->     factored.
+>     *The action is the same as`DW_CFL_def_cfl_offset`, except that
+>     the operand is signed and factored.*
 >
 
-**FIXME? -- Ben: fix what?**
+***FIXME? -- Should this be a block**
 
-> 6.  `DW_CFA_def_cfa_expression (exploc expression)`
+> 6.  `DW_CFL_def_cfl_expression (exploc expression)`
 >
->     The `DW_CFA_def_cfa_expression` instruction takes a single
+>     The `DW_CFL_def_cfl_expression` instruction takes a single
 >     operand encoded as a DW_FORM_exprloc value representing a DWARF
->     expression E.  The required action is to define the current CFA
+>     expression E.  The required action is to define the current CFL
 >     rule to be equivalent to the result of evaluating E with the
 >     current context, except the result kind is a location
 >     description, the compilation unit is unspecified, the object is
 >     unspecified, and an empty initial stack.
 >
->     See Section 7.4.2 Call Frame Instructions regarding restrictions on
->     the DWARF expressions that can be used in E.
+>     Refer to Section 7.4.2 Call Frame Instructions regarding
+>     restrictions on the DWARF expressions that can be used in E.
 
 Add the following CFI instructions:
 
-> 7.  `DW_CFA_def_aspace_cfa (ULEB register, ULEB byte displacement,
+> 7.  `DW_CFL_def_aspace_cfl (ULEB register, ULEB byte displacement,
 >     ULEB address space)`
 >
->     The `DW_CFA_def_aspace_cfa` instruction
+>     The `DW_CFL_def_aspace_cfl` instruction
 >     takes three unsigned LEB128 operands representing a register
 >     number R, a (non-factored) byte displacement B, and a target
 >     architecture specific address space identifier AS. The required
->     action is to define the current CFA rule to be equivalent to the
+>     action is to define the current CFL rule to be equivalent to the
 >     result of evaluating the DWARF expression `DW_OP_constu AS;
 >     DW_OP_aspace_bregx R, B` as a location description.
 >
@@ -478,15 +478,15 @@ Add the following CFI instructions:
 >     architecture specific `DW_ASPACE_*` values then the DWARF
 >     expression is ill-formed.
 >
-> 8.  `DW_CFA_def_aspace_cfa_sf (ULEB register, LEB factored byte
+> 8.  `DW_CFL_def_aspace_cfl_sf (ULEB register, LEB factored byte
 >     displacement, ULEB address space)`
 >
->     The `DW_CFA_def_aspace_cfa_sf`
+>     The `DW_CFL_def_aspace_cfl_sf`
 >     instruction takes three operands: an unsigned LEB128 value
 >     representing a register number R, a signed LEB128 factored byte
 >     displacement B, and an unsigned LEB128 value representing a
 >     target architecture specific address space identifier AS. The
->     required action is to define the current CFA rule to be
+>     required action is to define the current CFL rule to be
 >     equivalent to the result of evaluating the DWARF expression
 >     `DW_OP_constu AS; DW_OP_aspace_bregx R, B *
 >     data_alignment_factor` as a location description.
@@ -495,53 +495,50 @@ Add the following CFI instructions:
 >     architecture specific `DW_ASPACE_*` values, then the DWARF
 >     expression is ill-formed.
 >
->     [non-normative] The action is the same as
->     `DW_CFA_def_aspace_cfa`, except that the second operand is
->     signed and factored.
+>     *The action is the same as`DW_CFL_def_aspace_cfl`, except that
+>     the second operand is signed and factored.
+
+**Ben: add operands to 7.4.2.[1-5]**
+**EDIT below
 
 In Section 7.4.2.3 "Register Rule Instructions
 to:
 
-> 1.  `DW_CFA_undefined ( ULEB R)`
+> 1.  `DW_CFL_undefined ( ULEB R)`
 >
->     The DW_CFA_undefined instruction takes a single ULEB operand
->     that represents a register number <span
->     style="background-color:green">specified by R</span>. The
->     required action is to set the rule for the specified register to
->     “undefined.”
+>     The DW_CFL_undefined instruction takes a single ULEB operand
+>     that represents a register number `R`. The required action is to
+>     set the rule for the specified register to “undefined.”
 >
-> 2.  `DW_CFA_same_value( ULEB R)`
+> 2.  `DW_CFL_same_value( ULEB R)`
 >
->     The DW_CFA_same_value instruction takes a single ULEB operand
->     that represents a register number<span
->     style="background-color:green"> specified by R</span>. The
->     required action is to set the rule for the specified register to
->     “same value.”
+>     The DW_CFL_same_value instruction takes a single ULEB operand
+>     that represents a register number `R`. The required action is to
+>     set the rule for the specified register to “same value.”
 >
-> 3. `DW_CFA_offset(opcode_encoded R, ULEB B)`
+> 3. `DW_CFL_offset(opcode_encoded R, ULEB B)`
 >
->     The `DW_CFA_offset` instruction takes two operands: a register
->     number <span style="background-color: green;">R </span>(encoded
->     with the opcode) and an ULEB constant representing a factored
->     <span style="background-color: green;">displacement
->     B</span>. The required action is to change the rule for the
->     register <span style="background-color: green;">specified by R
->     to be an offset(B * data_alignment_factor)</span> rule.
+>     The `DW_CFL_offset` instruction takes two operands: a register
+>     number`R`(encoded with the opcode) and an ULEB constant `B`
+>     representing a factored displacement. The required action is to
+>     change the rule for the register <span style="background-color:
+>     green;">specified by R to be an offset(B *
+>     data_alignment_factor)</span> rule.
 >
-> 4.  `DW_CFA_offset_extended(ULEB R, ULEB B)`
+> 4.  `DW_CFL_offset_extended(ULEB R, ULEB B)`
 >
->     The `DW_CFA_offset_extended` instruction takes two ULEB operands
+>     The `DW_CFL_offset_extended` instruction takes two ULEB operands
 >     representing a register number <span style="background-color:
 >     green;">R </span>and a factored <span style="background-color:
 >     green;">displacement B</span>.
 >
->     *This instruction is identical to DW_CFA_offset<span
+>     *This instruction is identical to DW_CFL_offset<span
 >     style="background-color: green;">,</span> except for the
 >     encoding and size of the register operand.*
 >
-> 5.  `DW_CFA_offset_extended_sf(ULEB R, signed_LEB128 B)`
+> 5.  `DW_CFL_offset_extended_sf(ULEB R, signed_LEB128 B)`
 >
->     The `DW_CFA_offset_extended_sf` instruction takes two operands: an
+>     The `DW_CFL_offset_extended_sf` instruction takes two operands: an
 >     ULEB value representing a register number <span
 >     style="background-color: green;">R</span> and a <span
 >     style="background-color: green;">LEB</span> factored
@@ -549,12 +546,12 @@ to:
 >     B</span>.
 >
 >     *<span style="background-color: green;">This instruction is
->     identical to DW_CFA_offset_extended, except that B is
+>     identical to DW_CFL_offset_extended, except that B is
 >     signed.</span>*
 >
-> 6.  `DW_CFA_val_offset(ULEB R, ULEB B)`
+> 6.  `DW_CFL_val_offset(ULEB R, ULEB B)`
 >
->     The `DW_CFA_val_offset` instruction takes two ULEB operands
+>     The `DW_CFL_val_offset` instruction takes two ULEB operands
 >     representing a register number <span style="background-color:
 >     green;">R </span>and a factored <span style="background-color:
 >     green;">displacement B</span>. The required action is to change
@@ -563,9 +560,9 @@ to:
 >     val_offset(<span style="background-color: green;">B</span> *
 >     data_alignment_factor) rule.
 >
-> 7. `DW_CFA_val_offset_sf(ULEB R, LEB128 B)`
+> 7. `DW_CFL_val_offset_sf(ULEB R, LEB128 B)`
 >
->     The `DW_CFA_val_offset_sf` instruction takes two operands: an
+>     The `DW_CFL_val_offset_sf` instruction takes two operands: an
 >     <span style="background-color: green;"> ULEB</span> value
 >     representing a register number <span style="background-color:
 >     green;">R</span> and a <span style="background-color:
@@ -573,27 +570,27 @@ to:
 >     style="background-color: green;">displacement B</span>. <span
 >     style="background-color: green;">
 >
->     *This instruction is identical to DW_CFA_val_offset, except that
+>     *This instruction is identical to DW_CFL_val_offset, except that
 >     B is signed.</span>*
 
-Replace the text of item 7, `DW_CFA_val_offset_sf`, with the following:
+Replace the text of item 7, `DW_CFL_val_offset_sf`, with the following:
 
-> The `DW_CFA_val_offset_sf` instruction takes two operands: an
+> The `DW_CFL_val_offset_sf` instruction takes two operands: an
 > unsigned LEB128 value representing a register number R and a signed
 > LEB128 factored displacement B. This instruction is identical to
-> `DW_CFA_val_offset`, except that B is signed.
+> `DW_CFL_val_offset`, except that B is signed.
 
-Replace the text of item 8, `DW_CFA_register`, with the following:
+Replace the text of item 8, `DW_CFL_register`, with the following:
 
-> The `DW_CFA_register` instruction takes two unsigned LEB128 operands
+> The `DW_CFL_register` instruction takes two unsigned LEB128 operands
 > representing register numbers R1 and R2 respectively. The required
 > action is to set the rule for the register specified by R1 to be a
 > register(R2) rule.
 
-In item 9, `DW_CFA_expression`, replace the description with the
+In item 9, `DW_CFL_expression`, replace the description with the
 following:
 
-> The `DW_CFA_expression` instruction takes two operands: an unsigned
+> The `DW_CFL_expression` instruction takes two operands: an unsigned
 > LEB128 value representing a register number R, and a `DW_FORM_block`
 > value representing a DWARF operation expression E. The required
 > action is to change the rule for the register specified by R to be
@@ -605,10 +602,10 @@ following:
 > *See 7.4.2 Call Frame Instructions regarding restrictions on the
 > DWARF expression operations that can be used in E.*
 
-In item 10, `DW_CFA_val_expression`, replace the description with the
+In item 10, `DW_CFL_val_expression`, replace the description with the
 following:
 
-> The `DW_CFA_val_expression` instruction takes two operands: an
+> The `DW_CFL_val_expression` instruction takes two operands: an
 > unsigned LEB128 value representing a register number R, and a
 > `DW_FORM_block` value representing a DWARF operation expression
 > E. The required action is to change the rule for the register
@@ -622,29 +619,12 @@ following:
 > If the result of evaluating E is not a value with a base type size
 > that matches the register size, then the DWARF is ill-formed.
 
-In item 11, `DW_CFA_restore`, change "a register number" to "a
+In item 11, `DW_CFL_restore`, change "a register number" to "a
 register number R." Change "the indicated register" to "the register
 specified by R."
 
-In item 12, `DW_CFA_restore_extended`, change "a register number" to
+In item 12, `DW_CFL_restore_extended`, change "a register number" to
 "a register number R", and add a comma before "except".
-
-In Section 8.7.1 "Operation Expressions" of [Allow location
-description on the DWARF evaluation stack], add the following row to
-Table 8.9 "DWARF Operation Encodings":
-
-    ---------------------------------------------------------------------------
-
-    Table 8.9: DWARF Operation Encodings
-    ================================== ===== ======== =========================
-    Operation                          Code  Number   Notes
-                                             of
-                                             Operands
-    ================================== ===== ======== =========================
-    DW_OP_call_frame_entry_reg         TBA      1     ULEB128 register number
-    ================================== ===== ======== =========================
-
-    ---------------------------------------------------------------------------
 
 In section 8.23 Call Frame Information in Table 8.29
 
@@ -658,10 +638,10 @@ In the 4th column add a third operand
                                        2 bits 6 bits Operand 2,
                                                      Operand 3
     ================================== ====== ====== ==========================
-    DW_CFA_def_aspace_cfa                0    TBA    ULEB register,
+    DW_CFL_def_aspace_cfl                0    TBA    ULEB register,
 	                                                 ULEB offset,
                                                      ULEB address space
-	DW_CFA_def_aspace_cfa_s              0    TBA    ULEB register,
+	DW_CFL_def_aspace_cfl_s              0    TBA    ULEB register,
 	                                                 SLEB offset,
                                                      ULEB address space
     ================================== ====== ====== ==========================
