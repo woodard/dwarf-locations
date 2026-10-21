@@ -13,10 +13,11 @@ architectures of GPUs can even spill registers to other registers
 which are farther away in their memory hierarchy. The fact that GPUs
 use various locations to store previous frames which cannot be
 expressed as a simple address requires the generalization of Call
-Frame Addresses or Cononical Frame Addresses CFA (it is used
-inconsistently in the current standard) into Call Frame Locations,
-CFL, in much the same way that DWARF5's `DW_OP_push_object_address`
-needed to change to `DW_OP_push_object_location` in DWARF6.
+Frame Addresses or Cononical Frame Addresses CFA (it is currently used
+inconsistently in the current draft standard) into Call Frame
+Locations, CFL, in much the same way that DWARF5's
+`DW_OP_push_object_address` needed to change to
+`DW_OP_push_object_location` in DWARF6.
 
 While this terminology change has significant typographical impact on
 the standard itself, the amount of change needed to support these
@@ -73,37 +74,6 @@ quite as compact. However, to make the association between register
 rules and DWARF expressions more obvious, we included the analogus
 DWARF expressions with their register rules.
 
-### New Operator:
-
-**FIXME: Justification for new operator** **Ben: This supposed to
-partially replace DW_OP_entry_value.  This is going to need a strong
-justification why DW_OP_entry_value is not sufficient**
-
-**jakub: the current design comes from the intent to make it useful
-for 2 different purposes; one is the most common, gdb unwinds the
-stack, looks at the call site info and if it finds usable values
-there, propagates into DW_OP_entry_value in the callee the other is
-with tools like systemtap in mind; if you know ahead you'll stop in
-function xyz and will need to ask for value of some variable, if it
-uses DW_OP_entry_value, you can simply add another breakpoint at the
-start of the function and remember values that will be needed later,
-and then just use them when you hit the final breakpoint**
-
-As described in [DWARF Operations to Create Vector Composite Location
-Descriptions], a DWARF expression involving the set of SIMT lanes
-active on entry to a subprogram is required. The SIMT active lane mask
-may be held in a register that is modified as the subprogram
-executes. However, when a function returns the active lane mask
-register must be restored to the value it had on entry.
-
-The Call Frame Information (CFI) already encodes such register saving,
-so it is more efficient to provide an operation to return the location
-of a saved register than have to generate a loclist to describe the
-same information. This is now possible since [Allow location
-description on the DWARF evaluation stack] allows location
-descriptions on the stack.
-
-
 ## PROPOSED CHANGES
 
 In Section 3.1 DWARF Expression Evaluation Context
@@ -112,19 +82,18 @@ In bullet point 1 change:
 
 >    1. Required result kind
 >
->    The kind of result required – either a
->    location or a value – is determined by the DWARF construct where
->    the expression is found. For example, DWARF attributes with class
->    valexpr require a value, and attributes with class locexpr
->    require a location (see Section 8.5.5 on page 236).
+>    The kind of result required – either a location or a value – is
+>    determined by the DWARF construct where the expression is
+>    found. For example, DWARF attributes with class valexpr require a
+>    value, and attributes with class locexpr require a location (see
+>    Section 8.5.5 on page 236).
 
 to
 
 >    1. Required result kind
 >
->    The kind of result required – either a
->    location or a value – is determined by the DWARF construct where
->    the expression is found.
+>    The kind of result required – either a location or a value – is
+>    determined by the DWARF construct where the expression is found.
 >
 >    *For example, A variable's DWARF attributes with class valexpr
 >    require a value, and attributes with class locexpr require a
@@ -178,37 +147,7 @@ To:
 >    while the location of local variables in a stack frame cannot be
 >    evaluated without additional context.*
 
-
-In Section 3.6 Conxtext Query Perations add the following operation
-after `DW_OP_push_lane`:
-
-> 5.  `DW_OP_call_frame_entry_reg`([ULEB] R)
->
->     → <[location] register's location>
->
->     `DW_OP_call_frame_entry_reg` has a single ULEB128 integer
->     operand that represents a target architecture register number R.
->
->     It pushes a location description that holds the value of
->     register R on entry to the current subprogram as defined by the
->     call frame information (see Section 7.4 "Call Frame
->     Information").
->
->     If there is no call frame information defined, then the default
->     rules for the target architecture are used. If the register rule
->     is <i>undefined</i>, then the undefined location description is
->     pushed.  If the register rule is <i>same value</i>, then a
->     register location description for R is pushed.
-
-In Section 3.7 Memory Locations
-
-In the description of DW_OP_fbreg change "function" to "subprogram".
-
-In the description of DW_OP_breg0...DW_OP_breg32 after "register
-(0-31)" add the following qualifier: "at the time of the Current Frame
-(See 3.1 page 47) are virtually restored by CFI (see 7.4 page 193)"
-
-In section 3.8 replace:
+In section 3.7 Register Location Operations replace:
 
 >    The following DWARF operations can be used to specify a register
 >    location.
@@ -222,35 +161,36 @@ With:
 >    (See section 7.4 page 193) and that value is referenced when
 >    evaluating these operations.
 
+In Section 3.8 Memory Locations
+
+In the description of DW_OP_fbreg change "function" to "subprogram".
+
+In the description of DW_OP_breg0...DW_OP_breg32 after "register
+(0-31)" add the following qualifier: "at the time of the Current Frame
+(See 3.1 page 47) are virtually restored by CFI (see 7.4 page 193)"
+
 In Section 7.4 Call Frame Information
 
 Replace all uses of "subroutine" with "subprogram".
 
-Replace the 2nd bullet point:
-
->    An area of memory that is allocated on a stack called a “call
->    frame.” The call frame is identified by an address on the
->    stack. We refer to this address as the Canonical Frame Address or
->    CFA. Typically, the CFA is defined to be the value of the stack
->    pointer at the call site in the previous frame (which may be
->    different from its value on entry to the current frame).
-
-With:
+update the 2nd bullet point:
 
 >    An area of memory that is allocated on a stack called a “call
 >    frame.” The call frame is identified by an location on the
->    stack. We refer to this location as the Call Frame Location or
->    CFL. Typically, the CFL is defined to be the value of the stack
->    pointer at the call site in the previous frame (which may be
->    different from its value on entry to the current frame).
+>    stack. We refer to this location as the <del>Canonical Frame
+>    Address</del><ins>Call Frame Location</ins> or
+>    <del>CFA</del><ins>CFL</ins>. Typically, the
+>    <del>CFA</del><ins>CFL<ins> is defined to be the value of the
+>    stack pointer at the call site in the previous frame (which may
+>    be different from its value on entry to the current frame).
 >
->    *Previously, the Call Frame Location, CFL, was known as the Call
+>    *<ins>Previously, the Call Frame Location, CFL, was known as the Call
 >    Frame Address or Canonical Frame Address, CFA. However, GPUs do
 >    not necessarily store previous frames on a stack found in the
 >    default address space of the target. Their stack may be in some
 >    other local storage in the GPU. So it is not quite to appropriate
 >    to assume that it is a simple address anymore. Thus the name has
->    been changed to Call Frame Location, CFL.*
+>    been changed to Call Frame Location, CFL.</ins>*
 
 
 In the subsequent non-normative paragraphs and bullet points replace
@@ -279,7 +219,7 @@ In the register rules section for the "undefined rule" add this
 paragraph.
 
 > The previous value of this register is the undefined location
-> description (see 3.9 Undefined LocationS).
+> description (see 3.9 Undefined Locations).
 
 Remove the parenthetical comment and add the following non-normative
 text:
@@ -293,41 +233,27 @@ text:
 > *(By convention, it is preserved by the callee, but the callee has
 > not modified the register.)*
 
+For the "offset(N)" register rule, replace the description with the
+following:
+
+> N is a signed byte offset. The previous value of this register is
+> saved at the location L, where L is the location of the current CFL
+> offset by N bytes.
+
 For the "val_offset(N)" register rule, replace the description with
 the following:
 
 > N is a signed byte offset. The previous value of this register is
-> saved at the memory address pointed to by the location description
-> L, where L is the location description of the current CFL offset by
-> N bytes.
-
-**Ben: Is this right? L can be any kind of location. L+offset N must
-be a memory location. That address is then dereferenced and theat is
-the previous value of the register. It sounds like you are trying to
-avoid the situation where the size of the register is bigger than a
-generic. I can see this being a problem when trying to restore a
-vector register. Since the context in which this is being evaluated
-the size register is known this should not be a problem.**
-
-> The DWARF is ill-formed if the CFL is not a memory byte address
-> location description,
+> saved at the memory address pointed to by the location L, where L is
+> the location of the current CFL offset by N bytes.
 >
-> *The value of this register need not be representable as a generic
-> type. For example vector registers are often larger than the generic
-> type. A consumer can reference the size of the register from the
-> DWARF expression evaluation context (see Section 3.1 page XX) and
-> the entire bit contents of the register can be read from the
-> specified location.*
->
-
-**Ben: I'm not sure about the following**
-
-> *Since the CFL location description is required to be a memory byte
-> address location description, the value of val_offset(N) will also
-> be a memory byte address location description since it is offsetting
-> the CFL location description by N bytes. Furthermore, the value of
-> val_offset(N) will be a memory byte address in the target
-> architecture default address space.*
+> *Since the CFL location for this register rule is required to be a
+> memory location, the value of val_offset(N) will also be a memory
+> location since it is offsetting the CFL location by N
+> bytes. Furthermore, because val_offset(N) is a bare address without
+> the address space qualifier of a memory location, it must be
+> understood to be an address in the target architecture default
+> address space.*
 
 For the "register(R)" register rule, replace the description with the
 following:
@@ -348,10 +274,13 @@ following:
 > E is evaluated with the current context including the register and
 > the target architecture but without the compilation unit and the
 > current object which are unspecified. The resulting kind is a
-> location descriptionm.
+> location description.
+>
+> *expression(E) can be used to create an implicit location for a
+> register larger than the generic type.*
 
-For the "val_expression(E)" register rule, replace the description with the
-following:
+For the "val_expression(E)" register rule, replace the description
+with the following:
 
 > The previous value of this register is located either in a generic
 > value or in implicit storage produced by evaluating the DWARF
@@ -366,23 +295,10 @@ following:
 > storage and the resulting implicit storage is smaller than the
 > register size.
 >
-> *The value of this register need not be representable as a generic
-> type. For example vector registers are often larger than the generic
-> type. The implicit storage containing the value will be the bit
-> contents of the register.**
-
-**Ben: I don't think we should include this. See above**
-> an initial stack comprising the location
-> description of the current CFL (see Chapter 3 DWARF Expressions).
->
-
-**Ben: I tried to solve this:
-[For further discussion...] This has limited usefulness as the DWARF
-expression E can only produce values up to the size of the generic
-type. This is due to not allowing any operations that specify a type
-in a CFI operation> expression. This makes it unusable for registers
-that are larger than the generic type. However, expression(E) can be
-used to create an implicit location description of any size.**
+> DWARF expressions in CFI cannot include operations that specify a
+> type. Consequently, val_expression(E) cannot be used for registers
+> larger than the generic type. However, expression(E) can be used to
+> create an implicit location of any size.
 
 Change the paragraph that begins:
 
@@ -407,10 +323,7 @@ In item 3 (version), add the following:
 
 > The value of the CIE version number is 4.
 
-**[For further discussion...] Should this be increased to 5?
-Ben: What has changed?**
-
-In item 4 (augmentation), change " target-specific information" to
+In item 4 (augmentation), change "target-specific information" to
 "vendor and target architecture specific information".
 
 In item 9 (return_address_register), change "function" to
@@ -433,8 +346,6 @@ In the first bullet item, add the following opcodes to the list:
 `DW_OP_aspace_deref_type`. Change "operators are not allowed in an
 operand of these instructions" to "operations are not allowed".
 
-**Ben: assuming the operator name changes from the address space proposal.**
-
 Change the second bullet to:
 
 > `DW_OP_push_object_location` is not allowed because there is no object
@@ -444,22 +355,10 @@ In the third bullet, add `DW_OP_entry_value`. Change "is not
 meaningful...because its use would be circular" to "are not allowed
 because their use would be circular."
 
-Add the following bullet to the end of the list:
+Change the last non-normative paragraph to:
 
-> * `DW_OP_call_frame_entry_reg` is not allowed if evaluating E causes a
->   circular dependency between `DW_OP_call_frame_entry_reg` operations.
->
->   *For example, if a register R1 has a `DW_CFA_def_cfa_expression`
->   instruction that evaluates a `DW_OP_call_frame_entry_reg`
->   operation that specifies register R2, and register R2 has a
->   `DW_CFA_def_cfa_expression` instruction that that evaluates a
->   `DW_OP_call_frame_entry_reg` operation that specifies register R1.*
-
-**Ben: Huh? The following look the same**
-
-In the last paragraph, change "`DW_CFA_expression` and
-`DW_CFA_val_expression`" to "`DW_CFA_expression`, and
-`DW_CFA_val_expression`".
+> Call frame instructions to which these restrictions apply include
+> DW_CFL_def_cfa_expression, DW_CFL_expression, and DW_CFL_val_expression.
 
 **Ben: add operands to 7.4.2.[1-5]**
 
@@ -467,11 +366,11 @@ In Section 7.4.2.1 Row Creation Instructions add headers like were
 done in operation headers:
 
 
-> 1.  `DW_CFA_set_loc (generic address)`
-> 2.  `DW_CFA_advance_loc (opcode_encoded delta)`
-> 3.  `DW_CFA_advance_loc1 ( ubyte delta)`
-> 4.  `DW_CFA_advance_loc2 ( uhalf delta)`
-> 5.  `DW_CFA_advance_loc4 ( uword delta)`
+> 1.  `DW_CFL_set_loc (generic address)`
+> 2.  `DW_CFL_advance_loc (opcode_encoded delta)`
+> 3.  `DW_CFL_advance_loc1 ( ubyte delta)`
+> 4.  `DW_CFL_advance_loc2 ( uhalf delta)`
+> 5.  `DW_CFL_advance_loc4 ( uword delta)`
 
 In Section 7.4.2.2 "CFA Definition Instructions", replace the
 description of the six CFI instructions with the following:
